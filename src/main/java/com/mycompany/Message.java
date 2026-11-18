@@ -1,3 +1,4 @@
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,9 +16,9 @@ public class Message {
     private final String messageID;
     private final int messageNumber;
     private final String recipient;
-    private final String messageText;
+    @SerializedName("message")
+private final String messageText;
     private final String messageHash;
-
     private static int totalMessagesSent = 0;
 
 private static final List<Message> sentMessages = new ArrayList<>();
@@ -192,6 +193,78 @@ private static String storageFile = "messages.json";
     static void setStorageFile(String path) {
         storageFile = path;
     }
+    
+    public static String displayStoredSendersAndRecipients() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    StringBuilder result = new StringBuilder();
+
+    for (Message message : storedMessages) {
+        result.append("Sender: QuickChat User\n");
+        result.append("Recipient: ")
+                .append(message.recipient)
+                .append("\n\n");
+    }
+
+    return result.toString();
+}
+    
+    public static String displayLongestStoredMessage() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    Message longest = storedMessages.get(0);
+
+    for (Message message : storedMessages) {
+        if (message.messageText.length() > longest.messageText.length()) {
+            longest = message;
+        }
+    }
+
+    return "Longest stored message:\n" + longest.getMessageDetails();
+}
+    
+    public static String searchStoredMessageByID(String searchID) {
+    loadStoredMessages();
+
+    for (Message message : storedMessages) {
+        if (message.messageID.equals(searchID)) {
+            return "Message found!\n"
+                    + "Recipient: " + message.recipient
+                    + "\nMessage: " + message.messageText;
+        }
+    }
+
+    return "Message ID not found.";
+}
+    
+    public static String searchStoredMessagesByRecipient(String searchRecipient) {
+    loadStoredMessages();
+
+    StringBuilder result = new StringBuilder();
+    boolean found = false;
+
+    for (Message message : storedMessages) {
+        if (message.recipient.equals(searchRecipient)) {
+            result.append(message.getMessageDetails())
+                    .append("\n\n");
+            found = true;
+        }
+    }
+
+    if (!found) {
+        return "No stored messages found for this recipient.";
+    }
+
+    return result.toString();
+}
 public static void loadStoredMessages() {
     Path path = Paths.get(storageFile);
 
