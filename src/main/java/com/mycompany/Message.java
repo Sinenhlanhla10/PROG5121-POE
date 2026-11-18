@@ -265,6 +265,67 @@ private static String storageFile = "messages.json";
 
     return result.toString();
 }
+    
+    public static String deleteStoredMessageByHash(String searchHash) {
+    loadStoredMessages();
+
+    boolean removed = storedMessages.removeIf(
+            message -> message.messageHash.equals(searchHash)
+    );
+
+    if (!removed) {
+        return "Message hash not found.";
+    }
+
+    try {
+        Gson gson = new Gson();
+        String json = gson.toJson(storedMessages);
+        Files.writeString(
+                Paths.get(storageFile),
+                json,
+                StandardCharsets.UTF_8
+        );
+
+        return "Stored message successfully deleted.";
+
+    } catch (IOException e) {
+        return "Error deleting message: " + e.getMessage();
+    }
+}
+ 
+    public static String displayStoredMessageReport() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    StringBuilder report = new StringBuilder();
+
+    report.append("========== STORED MESSAGE REPORT ==========\n\n");
+
+    for (Message message : storedMessages) {
+        report.append("Message ID: ")
+                .append(message.messageID)
+                .append("\n");
+
+        report.append("Message Hash: ")
+                .append(message.messageHash)
+                .append("\n");
+
+        report.append("Recipient: ")
+                .append(message.recipient)
+                .append("\n");
+
+        report.append("Message: ")
+                .append(message.messageText)
+                .append("\n");
+
+        report.append("-------------------------------------------\n");
+    }
+
+    return report.toString();
+}
 public static void loadStoredMessages() {
     Path path = Paths.get(storageFile);
 
