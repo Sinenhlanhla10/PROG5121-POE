@@ -18,8 +18,14 @@ public class Message {
     private final String messageHash;
 
     private static int totalMessagesSent = 0;
-    private static final List<String> sentMessages = new ArrayList<>();
-    private static String storageFile = "messages.json";
+
+private static final List<String> sentMessages = new ArrayList<>();
+private static final List<String> disregardedMessages = new ArrayList<>();
+private static final List<Message> storedMessages = new ArrayList<>();
+private static final List<String> messageHashes = new ArrayList<>();
+private static final List<String> messageIDs = new ArrayList<>();
+
+private static String storageFile = "messages.json";
 
     public Message(String recipient, String messageText) {
         this(generateMessageID(), totalMessagesSent, recipient, messageText);
