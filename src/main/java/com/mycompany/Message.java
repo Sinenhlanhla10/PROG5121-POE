@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -191,4 +192,41 @@ private static String storageFile = "messages.json";
     static void setStorageFile(String path) {
         storageFile = path;
     }
+public static void loadStoredMessages() {
+    Path path = Paths.get(storageFile);
+
+    if (!Files.exists(path)) {
+        return;
+    }
+
+    try {
+        String json = Files.readString(path, StandardCharsets.UTF_8);
+
+        if (json.isBlank()) {
+            return;
+        }
+
+        Gson gson = new Gson();
+        Message[] messages = gson.fromJson(json, Message[].class);
+
+        storedMessages.clear();
+
+        if (messages != null) {
+            for (Message message : messages) {
+                storedMessages.add(message);
+
+                if (!messageIDs.contains(message.messageID)) {
+                    messageIDs.add(message.messageID);
+                }
+
+                if (!messageHashes.contains(message.messageHash)) {
+                    messageHashes.add(message.messageHash);
+                }
+            }
+        }
+
+    } catch (IOException e) {
+        System.out.println("Could not load stored messages: " + e.getMessage());
+    }
+}
 }
