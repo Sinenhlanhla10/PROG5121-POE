@@ -19,8 +19,8 @@ public class Message {
 
     private static int totalMessagesSent = 0;
 
-private static final List<String> sentMessages = new ArrayList<>();
-private static final List<String> disregardedMessages = new ArrayList<>();
+private static final List<Message> sentMessages = new ArrayList<>();
+private static final List<Message> disregardedMessages = new ArrayList<>();
 private static final List<Message> storedMessages = new ArrayList<>();
 private static final List<String> messageHashes = new ArrayList<>();
 private static final List<String> messageIDs = new ArrayList<>();
@@ -32,13 +32,16 @@ private static String storageFile = "messages.json";
     }
 
     Message(String messageID, int messageNumber,
-            String recipient, String messageText) {
-        this.messageID = messageID;
-        this.messageNumber = messageNumber;
-        this.recipient = recipient;
-        this.messageText = messageText;
-        this.messageHash = createMessageHash();
-    }
+        String recipient, String messageText) {
+    this.messageID = messageID;
+    this.messageNumber = messageNumber;
+    this.recipient = recipient;
+    this.messageText = messageText;
+    this.messageHash = createMessageHash();
+
+    messageIDs.add(messageID);
+    messageHashes.add(messageHash);
+}
 
     private static String generateMessageID() {
         long number = ThreadLocalRandom.current().nextLong(10_000_000_000L);
@@ -92,23 +95,28 @@ private static String storageFile = "messages.json";
     }
 
     public String SentMessage(String choice) {
-        switch (choice) {
-            case "1":
-                sentMessages.add(getMessageDetails());
-                totalMessagesSent++;
-                return "Message successfully sent.";
-            case "2":
-                return "Press 0 to delete the message.";
-            case "3":
-                if (storeMessage()) {
-                    return "Message successfully stored.";
-                }
-                return "Message could not be stored.";
-            default:
-                return "Invalid option. Please choose 1, 2 or 3.";
-        }
-    }
+    switch (choice) {
+        case "1":
+            sentMessages.add(this);
+            totalMessagesSent++;
+            return "Message successfully sent.";
 
+        case "2":
+            disregardedMessages.add(this);
+            return "Press 0 to delete the message.";
+
+        case "3":
+            if (storeMessage()) {
+                storedMessages.add(this);
+                return "Message successfully stored.";
+            }
+            return "Message could not be stored.";
+
+        default:
+            return "Invalid option. Please choose 1, 2 or 3.";
+    }
+}
+    
     public String getMessageDetails() {
         return "Message ID: " + messageID
                 + "\nMessage Hash: " + messageHash
@@ -117,11 +125,18 @@ private static String storageFile = "messages.json";
     }
 
     public static String printMessages() {
-        if (sentMessages.isEmpty()) {
-            return "No messages have been sent yet.";
-        }
-        return String.join("\n\n", sentMessages);
+    if (sentMessages.isEmpty()) {
+        return "No messages have been sent yet.";
     }
+
+    List<String> details = new ArrayList<>();
+
+    for (Message message : sentMessages) {
+        details.add(message.getMessageDetails());
+    }
+
+    return String.join("\n\n", details);
+}
 
     public static int returnTotalMessages() {
         return totalMessagesSent;
@@ -165,9 +180,13 @@ private static String storageFile = "messages.json";
     }
 
     static void resetCounters() {
-        totalMessagesSent = 0;
-        sentMessages.clear();
-    }
+    totalMessagesSent = 0;
+    sentMessages.clear();
+    disregardedMessages.clear();
+    storedMessages.clear();
+    messageHashes.clear();
+    messageIDs.clear();
+}
 
     static void setStorageFile(String path) {
         storageFile = path;
