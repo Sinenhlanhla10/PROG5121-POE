@@ -144,4 +144,94 @@ class MessageTest {
         assertTrue(json.contains("\"messageID\": \"0012345678\""));
         assertTrue(json.contains("\"messageID\": \"0098765432\""));
     }
+
+    @Test
+    void loadStoredMessagesFromJson() {
+        mike().SentMessage("3");
+
+        Message.resetCounters();
+        Message.loadStoredMessages();
+
+        String report = Message.displayStoredMessageReport();
+
+        assertTrue(report.contains("0012345678"));
+        assertTrue(report.contains(MIKE_NUMBER));
+        assertTrue(report.contains(MIKE_TEXT));
+    }
+    
+    @Test
+    void displayLongestStoredMessage() {
+        mike().SentMessage("3");
+        keegan().SentMessage("3");
+
+        String result = Message.displayLongestStoredMessage();
+
+        assertTrue(result.contains(MIKE_TEXT));
+    }
+    
+    
+    @Test
+    void displayStoredSendersAndRecipients() {
+        mike().SentMessage("3");
+
+    String result = Message.displayStoredSendersAndRecipients();
+
+    assertTrue(result.contains("QuickChat User"));
+    assertTrue(result.contains(MIKE_NUMBER));
+    }
+
+    @Test
+    void searchStoredMessageByID() {
+        mike().SentMessage("3");
+
+        String result = Message.searchStoredMessageByID("0012345678");
+
+        assertTrue(result.contains(MIKE_NUMBER));
+        assertTrue(result.contains(MIKE_TEXT));
+    }
+
+    @Test
+    void searchStoredMessagesByRecipient() {
+        Message first = new Message(
+                "0012345678", 0, MIKE_NUMBER, MIKE_TEXT);
+        Message second = new Message(
+                "0098765432", 1, MIKE_NUMBER, KEEGAN_TEXT);
+
+        first.SentMessage("3");
+        second.SentMessage("3");
+
+        String result = Message.searchStoredMessagesByRecipient(MIKE_NUMBER);
+
+        assertTrue(result.contains(MIKE_TEXT));
+        assertTrue(result.contains(KEEGAN_TEXT));
+    }
+
+    @Test
+    void deleteStoredMessageByHash() {
+        Message message = mike();
+        message.SentMessage("3");
+
+        String hash = message.createMessageHash();
+
+        String result = Message.deleteStoredMessageByHash(hash);
+
+        assertEquals("Stored message successfully deleted.", result);
+
+        String report = Message.displayStoredMessageReport();
+        assertFalse(report.contains(MIKE_TEXT));
+    }
+
+    @Test
+    void displayStoredMessageReport() {
+        mike().SentMessage("3");
+
+        String result = Message.displayStoredMessageReport();
+
+        assertTrue(result.contains("STORED MESSAGE REPORT"));
+        assertTrue(result.contains("Message ID: 0012345678"));
+        assertTrue(result.contains("Message Hash: 00:0:HITONIGHT"));
+        assertTrue(result.contains("Recipient: " + MIKE_NUMBER));
+        assertTrue(result.contains("Message: " + MIKE_TEXT));
+    }
+
 }

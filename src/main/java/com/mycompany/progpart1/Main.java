@@ -114,10 +114,10 @@ public class Main {
         while (running) {
 
             System.out.println();
-            System.out.println("Choose an option:");
             System.out.println("1) Send Messages");
             System.out.println("2) Show recently sent messages");
             System.out.println("3) Quit");
+            System.out.println("4) Stored Messages");
             System.out.print("Enter your choice: ");
 
             String choice = scanner.nextLine().trim();
@@ -152,8 +152,12 @@ public class Main {
                     running = false;
                     break;
 
+                case "4":
+                    storedMessagesMenu(scanner);
+                    break;
+                    
                 default:
-                    System.out.println("Invalid option. Please enter 1, 2 or 3.");
+                    System.out.println("Invalid option. Please enter 1, 2, 3 or 4.");
             }
         }
     }
@@ -242,4 +246,71 @@ public class Main {
 
         return true; // stored
     }
+
+    private static void storedMessagesMenu(Scanner scanner) {
+
+    boolean inMenu = true;
+
+    while (inMenu) {
+
+        System.out.println();
+        System.out.println("========== STORED MESSAGES ==========");
+        System.out.println("a) Display sender and recipient");
+        System.out.println("b) Display longest stored message");
+        System.out.println("c) Search message by ID");
+        System.out.println("d) Search messages by recipient");
+        System.out.println("e) Delete message using message hash");
+        System.out.println("f) Display full stored message report");
+        System.out.println("g) Return to main menu");
+        System.out.print("Choose an option: ");
+
+        String choice = scanner.nextLine().trim().toLowerCase();
+
+        switch (choice) {
+
+            case "a":
+                System.out.println(
+                        Message.displayStoredSendersAndRecipients());
+                break;
+
+            case "b":
+                System.out.println(
+                        Message.displayLongestStoredMessage());
+                break;
+
+            case "c":
+                System.out.print("Enter message ID: ");
+                String id = scanner.nextLine().trim();
+                System.out.println(
+                        Message.searchStoredMessageByID(id));
+                break;
+
+            case "d":
+                System.out.print("Enter recipient number: ");
+                String recipient = scanner.nextLine().trim();
+                System.out.println(
+                        Message.searchStoredMessagesByRecipient(recipient));
+                break;
+
+            case "e":
+                System.out.print("Enter message hash: ");
+                String hash = scanner.nextLine().trim();
+                System.out.println(
+                        Message.deleteStoredMessageByHash(hash));
+                break;
+
+            case "f":
+                System.out.println(
+                        Message.displayStoredMessageReport());
+                break;
+
+            case "g":
+                inMenu = false;
+                break;
+
+            default:
+                System.out.println("Invalid option. Please choose a to g.");
+        }
+    }
+}
 }

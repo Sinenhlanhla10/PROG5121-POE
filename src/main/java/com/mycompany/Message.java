@@ -1,3 +1,5 @@
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -11,28 +13,37 @@ public class Message {
 
     public static final int MAX_MESSAGE_LENGTH = 250;
 
-    private final String messageID;
-    private final int messageNumber;
-    private final String recipient;
-    private final String messageText;
-    private final String messageHash;
-
+    private String messageID;
+    private int messageNumber;
+    private String recipient;
+    @SerializedName("message")
+    private String messageText;
+    private String messageHash;
     private static int totalMessagesSent = 0;
-    private static final List<String> sentMessages = new ArrayList<>();
-    private static String storageFile = "messages.json";
+
+private static final List<Message> sentMessages = new ArrayList<>();
+private static final List<Message> disregardedMessages = new ArrayList<>();
+private static final List<Message> storedMessages = new ArrayList<>();
+private static final List<String> messageHashes = new ArrayList<>();
+private static final List<String> messageIDs = new ArrayList<>();
+
+private static String storageFile = "messages.json";
 
     public Message(String recipient, String messageText) {
         this(generateMessageID(), totalMessagesSent, recipient, messageText);
     }
 
     Message(String messageID, int messageNumber,
-            String recipient, String messageText) {
-        this.messageID = messageID;
-        this.messageNumber = messageNumber;
-        this.recipient = recipient;
-        this.messageText = messageText;
-        this.messageHash = createMessageHash();
-    }
+        String recipient, String messageText) {
+    this.messageID = messageID;
+    this.messageNumber = messageNumber;
+    this.recipient = recipient;
+    this.messageText = messageText;
+    this.messageHash = createMessageHash();
+
+    messageIDs.add(messageID);
+    messageHashes.add(messageHash);
+}
 
     private static String generateMessageID() {
         long number = ThreadLocalRandom.current().nextLong(10_000_000_000L);
@@ -86,23 +97,28 @@ public class Message {
     }
 
     public String SentMessage(String choice) {
-        switch (choice) {
-            case "1":
-                sentMessages.add(getMessageDetails());
-                totalMessagesSent++;
-                return "Message successfully sent.";
-            case "2":
-                return "Press 0 to delete the message.";
-            case "3":
-                if (storeMessage()) {
-                    return "Message successfully stored.";
-                }
-                return "Message could not be stored.";
-            default:
-                return "Invalid option. Please choose 1, 2 or 3.";
-        }
-    }
+    switch (choice) {
+        case "1":
+            sentMessages.add(this);
+            totalMessagesSent++;
+            return "Message successfully sent.";
 
+        case "2":
+            disregardedMessages.add(this);
+            return "Press 0 to delete the message.";
+
+        case "3":
+            if (storeMessage()) {
+                storedMessages.add(this);
+                return "Message successfully stored.";
+            }
+            return "Message could not be stored.";
+
+        default:
+            return "Invalid option. Please choose 1, 2 or 3.";
+    }
+}
+    
     public String getMessageDetails() {
         return "Message ID: " + messageID
                 + "\nMessage Hash: " + messageHash
@@ -111,11 +127,18 @@ public class Message {
     }
 
     public static String printMessages() {
-        if (sentMessages.isEmpty()) {
-            return "No messages have been sent yet.";
-        }
-        return String.join("\n\n", sentMessages);
+    if (sentMessages.isEmpty()) {
+        return "No messages have been sent yet.";
     }
+
+    List<String> details = new ArrayList<>();
+
+    for (Message message : sentMessages) {
+        details.add(message.getMessageDetails());
+    }
+
+    return String.join("\n\n", details);
+}
 
     public static int returnTotalMessages() {
         return totalMessagesSent;
@@ -159,11 +182,185 @@ public class Message {
     }
 
     static void resetCounters() {
-        totalMessagesSent = 0;
-        sentMessages.clear();
-    }
+    totalMessagesSent = 0;
+    sentMessages.clear();
+    disregardedMessages.clear();
+    storedMessages.clear();
+    messageHashes.clear();
+    messageIDs.clear();
+}
 
     static void setStorageFile(String path) {
         storageFile = path;
     }
+    
+    public static String displayStoredSendersAndRecipients() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    StringBuilder result = new StringBuilder();
+
+    for (Message message : storedMessages) {
+        result.append("Sender: QuickChat User\n");
+        result.append("Recipient: ")
+                .append(message.recipient)
+                .append("\n\n");
+    }
+
+    return result.toString();
+}
+    
+    public static String displayLongestStoredMessage() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    Message longest = storedMessages.get(0);
+
+    for (Message message : storedMessages) {
+        if (message.messageText.length() > longest.messageText.length()) {
+            longest = message;
+        }
+    }
+
+    return "Longest stored message:\n" + longest.getMessageDetails();
+}
+    
+    public static String searchStoredMessageByID(String searchID) {
+    loadStoredMessages();
+
+    for (Message message : storedMessages) {
+        if (message.messageID.equals(searchID)) {
+            return "Message found!\n"
+                    + "Recipient: " + message.recipient
+                    + "\nMessage: " + message.messageText;
+        }
+    }
+
+    return "Message ID not found.";
+}
+    
+    public static String searchStoredMessagesByRecipient(String searchRecipient) {
+    loadStoredMessages();
+
+    StringBuilder result = new StringBuilder();
+    boolean found = false;
+
+    for (Message message : storedMessages) {
+        if (message.recipient.equals(searchRecipient)) {
+            result.append(message.getMessageDetails())
+                    .append("\n\n");
+            found = true;
+        }
+    }
+
+    if (!found) {
+        return "No stored messages found for this recipient.";
+    }
+
+    return result.toString();
+}
+    
+    public static String deleteStoredMessageByHash(String searchHash) {
+    loadStoredMessages();
+
+    boolean removed = storedMessages.removeIf(
+            message -> message.messageHash.equals(searchHash)
+    );
+
+    if (!removed) {
+        return "Message hash not found.";
+    }
+
+    try {
+        Gson gson = new Gson();
+        String json = gson.toJson(storedMessages);
+        Files.writeString(
+                Paths.get(storageFile),
+                json,
+                StandardCharsets.UTF_8
+        );
+
+        return "Stored message successfully deleted.";
+
+    } catch (IOException e) {
+        return "Error deleting message: " + e.getMessage();
+    }
+}
+ 
+    public static String displayStoredMessageReport() {
+    loadStoredMessages();
+
+    if (storedMessages.isEmpty()) {
+        return "No stored messages available.";
+    }
+
+    StringBuilder report = new StringBuilder();
+
+    report.append("========== STORED MESSAGE REPORT ==========\n\n");
+
+    for (Message message : storedMessages) {
+        report.append("Message ID: ")
+                .append(message.messageID)
+                .append("\n");
+
+        report.append("Message Hash: ")
+                .append(message.messageHash)
+                .append("\n");
+
+        report.append("Recipient: ")
+                .append(message.recipient)
+                .append("\n");
+
+        report.append("Message: ")
+                .append(message.messageText)
+                .append("\n");
+
+        report.append("-------------------------------------------\n");
+    }
+
+    return report.toString();
+}
+public static void loadStoredMessages() {
+    Path path = Paths.get(storageFile);
+
+    if (!Files.exists(path)) {
+        return;
+    }
+
+    try {
+        String json = Files.readString(path, StandardCharsets.UTF_8);
+
+        if (json.isBlank()) {
+            return;
+        }
+
+        Gson gson = new Gson();
+        Message[] messages = gson.fromJson(json, Message[].class);
+
+        storedMessages.clear();
+
+        if (messages != null) {
+            for (Message message : messages) {
+                storedMessages.add(message);
+
+                if (!messageIDs.contains(message.messageID)) {
+                    messageIDs.add(message.messageID);
+                }
+
+                if (!messageHashes.contains(message.messageHash)) {
+                    messageHashes.add(message.messageHash);
+                }
+            }
+        }
+
+    } catch (IOException e) {
+        System.out.println("Could not load stored messages: " + e.getMessage());
+    }
+}
 }
