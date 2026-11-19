@@ -13,12 +13,12 @@ public class Message {
 
     public static final int MAX_MESSAGE_LENGTH = 250;
 
-    private final String messageID;
-    private final int messageNumber;
-    private final String recipient;
+    private String messageID;
+    private int messageNumber;
+    private String recipient;
     @SerializedName("message")
-private final String messageText;
-    private final String messageHash;
+    private String messageText;
+    private String messageHash;
     private static int totalMessagesSent = 0;
 
 private static final List<Message> sentMessages = new ArrayList<>();

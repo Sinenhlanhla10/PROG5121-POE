@@ -1,0 +1,14 @@
+[
+  {
+    "messageID": "5008277405",
+    "messageHash": "50:1:WHERETIME",
+    "recipient": "+27838884567",
+    "message": "Where are you? You are late! I have asked you to be on time."
+  },
+  {
+    "messageID": "5488725665",
+    "messageHash": "54:1:OKYOU",
+    "recipient": "+27838884567",
+    "message": "Ok, I am leaving without you."
+  }
+]
